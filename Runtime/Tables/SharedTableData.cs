@@ -80,7 +80,7 @@ namespace UnityEngine.Localization.Tables
         MetadataCollection m_Metadata = new MetadataCollection();
 
         [SerializeReference]
-        IKeyGenerator m_KeyGenerator = new DistributedUIDGenerator();
+        IKeyGenerator m_KeyGenerator = new KeyHashIDGenerator();
 
         Guid m_TableCollectionNameGuid;
 
@@ -423,13 +423,12 @@ namespace UnityEngine.Localization.Tables
 
         SharedTableEntry AddKeyInternal(string key)
         {
-            var newEntry = new SharedTableEntry() { Id = m_KeyGenerator.GetNextKey(), Key = key };
+            var newEntry = new SharedTableEntry() { Id = m_KeyGenerator.GetHash(key), Key = key };
 
             // Its possible that the Id already exists, such as when a custom entry was added by a user.
             // We need to to make sure this value is unique, if it is not then we keep trying until we find a unique Id.
-            while (FindWithId(newEntry.Id) != null)
-            {
-                newEntry.Id = m_KeyGenerator.GetNextKey();
+            if (FindWithId(newEntry.Id) != null) {
+                throw new ArgumentException($"The Id {newEntry.Id} is already in use. Please use different localization key instead `{key}`");
             }
 
             Entries.Add(newEntry);
